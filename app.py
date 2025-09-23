@@ -62,6 +62,42 @@ else:
     input_scanners = []
     output_scanners = []
 
+# Admin access control functions
+def get_admin_config():
+    """Get admin configuration from Streamlit secrets."""
+    try:
+        admin_config = st.secrets.get("admin", {})
+        return {
+            "admin_emails": admin_config.get("admin_emails", ["tsztkwok@gmail.com"]),
+            "super_admin": admin_config.get("super_admin", "tsztkwok@gmail.com"),
+            "allow_analytics": admin_config.get("allow_analytics", True),
+            "allow_user_management": admin_config.get("allow_user_management", True),
+            "allow_system_controls": admin_config.get("allow_system_controls", False)
+        }
+    except Exception as e:
+        print(f"⚠️ Error loading admin config: {e}")
+        # Fallback configuration
+        return {
+            "admin_emails": ["tsztkwok@gmail.com"],
+            "super_admin": "tsztkwok@gmail.com",
+            "allow_analytics": True,
+            "allow_user_management": False,
+            "allow_system_controls": False
+        }
+
+def is_admin_user(user_email):
+    """Check if a user is an admin."""
+    if not user_email:
+        return False
+    admin_config = get_admin_config()
+    return user_email in admin_config["admin_emails"]
+
+def is_super_admin(user_email):
+    """Check if a user is the super admin."""
+    if not user_email:
+        return False
+    admin_config = get_admin_config()
+    return user_email == admin_config["super_admin"]
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1011,12 +1047,12 @@ def show_admin_dashboard():
     st.header("📊 Usage Analytics Dashboard")
     st.markdown("---")
     
-    # Check if user is admin (you can customize this logic)
+    # Check if user is admin using secrets configuration
     user_email = st.session_state.get('user_email', '')
-    admin_emails = ['admin@company.com', 'tsztkwok@gmail.com']  # Add your admin emails here
     
-    if user_email not in admin_emails:
+    if not is_admin_user(user_email):
         st.error("❌ Access denied. Admin privileges required.")
+        st.info("💡 Only authorized administrators can access this dashboard.")
         return
     
     # Get usage statistics
@@ -1324,9 +1360,10 @@ def main():
         
         # Admin dashboard access
         user_email = st.session_state.get('user_email', '')
-        admin_emails = ['admin@company.com', 'tsztkwok@gmail.com']  # Add your admin emails here
-        if user_email in admin_emails:
+            
+        if is_admin_user(user_email):
             st.markdown("---")
+            st.write("🔧 **Admin Tools**")
             if st.button("📊 Admin Dashboard"):
                 st.session_state.show_admin = True
                 st.rerun()

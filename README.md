@@ -4,7 +4,7 @@ An intelligent, secure, and personalized cover letter generation system built wi
 
 ## ✨ Key Features
 
-- **🔐 Invitation-Only Access**: Secure authentication system with pre-approved user emails
+- **📊 Admin Dashboard**: Web-based analytics dashboard with real-time usage monitoring
 - **👤 User Data Isolation**: Each user's data is completely separated and secure
 - **🧠 Personalized AI**: Learns from user preferences and writing patterns
 - **📊 Analytics & Monitoring**: Comprehensive security logging and usage statistics
@@ -13,6 +13,9 @@ An intelligent, secure, and personalized cover letter generation system built wi
 - **🔄 Flexible LLM Backend**: Easy switching between local and cloud AI models
 - **⏱️ Daily Usage Limits**: Built-in 5 cover letters per day limit with admin override
 - **💰 Cost Control**: Prevents excessive OpenAI API usage with automatic tracking
+- **🔌 MCP Server**: Model Context Protocol server for privacy-focused analytics integration
+- **🎯 Smart Company Detection**: LLM-powered company name extraction for accurate analytics
+- **📈 VS Code Integration**: Direct analytics access through VS Code with MCP client interface
 
 ## 🚀 Quick Start
 
@@ -188,6 +191,60 @@ invitation_secret = "your-long-random-secret"
 admin_password = "your-admin-password"
 ```
 
+
+## 📊 Admin Dashboard
+
+The admin dashboard provides comprehensive analytics and system monitoring for authorized administrators.
+
+### Accessing the Dashboard
+
+1. **Log in** with an admin email (configured in `secrets.toml`)
+2. **Look for "🔧 Admin Tools"** in the sidebar
+3. **Click "📊 Admin Dashboard"** to view analytics
+
+### Dashboard Features
+
+**📈 Usage Statistics**
+- Total users and cover letter generations
+- Success rates and processing times
+- Daily activity trends
+- Average letter length and quality metrics
+
+**🏢 Company Analytics**
+- Most popular companies (extracted via LLM)
+- Application success rates by company
+- Industry trends and patterns
+
+**⏰ Activity Monitoring**
+- Recent user activity (last 24 hours)
+- Peak usage hours and patterns
+- System health indicators
+
+**👥 User Management**
+- Top active users (anonymized)
+- Daily usage limits tracking
+- User engagement metrics
+
+### Admin Configuration
+
+Configure admin access in your `secrets.toml`:
+
+```toml
+[admin]
+admin_emails = ["your.email@example.com"]
+super_admin = "your.email@example.com"
+allow_analytics = true
+allow_user_management = true
+allow_system_controls = false
+```
+
+### Security Features
+
+- **Access Control**: Only authorized emails can access dashboard
+- **Audit Logging**: All admin actions are logged
+- **Data Privacy**: No personal data or resume content exposed
+- **Aggregated Views**: All statistics are anonymized and aggregated
+
 ## 🔍 Monitoring & Logs
 
 ### Security Audit Log
@@ -253,6 +310,67 @@ Test your setup:
 5. **Updates**: Keep dependencies updated
 6. **Network Security**: Use HTTPS in production
 7. **Access Control**: Limit admin dashboard access
+
+
+## 🔌 MCP Server (Model Context Protocol)
+
+The application includes a privacy-focused MCP server that provides analytics access through VS Code and other MCP clients.
+
+### Features
+
+- **Privacy-First Design**: No personal data or resume content exposed
+- **Aggregated Analytics**: System-wide usage metrics and trends
+- **VS Code Integration**: Direct access through VS Code MCP client
+- **Real-time Monitoring**: Current system health and activity
+
+### Available Tools
+
+**📊 `get_usage_statistics`**
+- Total users and generations
+- Success rates and performance
+- Daily activity trends
+- Popular companies (aggregated)
+
+**⚡ `get_recent_activity`**
+- Last 24 hours activity
+- Growth comparisons
+- User engagement metrics
+
+**🔋 `get_system_health`**
+- System status indicators
+- Performance benchmarks
+- Uptime monitoring
+
+### VS Code Integration
+
+Use the included VS Code interface for direct analytics access:
+
+```bash
+# Get usage statistics
+python vscode_mcp_interface.py stats
+
+# Check recent activity
+python vscode_mcp_interface.py recent
+
+# Monitor system health
+python vscode_mcp_interface.py health
+```
+
+### MCP Server Setup
+
+1. **Install MCP requirements**:
+   ```bash
+   pip install -r mcp_requirements.txt
+   ```
+
+2. **Configure VS Code** (see `.vscode/settings.json`)
+
+3. **Run MCP server**:
+   ```bash
+   python mcp_server.py
+   ```
+
+For detailed MCP setup instructions, see [MCP_README.md](MCP_README.md).
 
 ## 📖 API Documentation
 

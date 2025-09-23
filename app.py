@@ -68,18 +68,19 @@ def get_admin_config():
     try:
         admin_config = st.secrets.get("admin", {})
         return {
-            "admin_emails": admin_config.get("admin_emails", ["tsztkwok@gmail.com"]),
-            "super_admin": admin_config.get("super_admin", "tsztkwok@gmail.com"),
+            "admin_emails": admin_config.get("admin_emails", []),
+            "super_admin": admin_config.get("super_admin", ""),
             "allow_analytics": admin_config.get("allow_analytics", True),
             "allow_user_management": admin_config.get("allow_user_management", True),
             "allow_system_controls": admin_config.get("allow_system_controls", False)
         }
     except Exception as e:
         print(f"⚠️ Error loading admin config: {e}")
-        # Fallback configuration
+        print("⚠️ No admin configuration found. Please configure [admin] section in secrets.toml")
+        # Return empty configuration - no hardcoded fallback
         return {
-            "admin_emails": ["tsztkwok@gmail.com"],
-            "super_admin": "tsztkwok@gmail.com",
+            "admin_emails": [],
+            "super_admin": "",
             "allow_analytics": True,
             "allow_user_management": False,
             "allow_system_controls": False
@@ -98,6 +99,11 @@ def is_super_admin(user_email):
         return False
     admin_config = get_admin_config()
     return user_email == admin_config["super_admin"]
+
+def has_admin_configured():
+    """Check if any admin users are configured."""
+    admin_config = get_admin_config()
+    return len(admin_config["admin_emails"]) > 0
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1049,6 +1055,20 @@ def show_admin_dashboard():
     
     # Check if user is admin using secrets configuration
     user_email = st.session_state.get('user_email', '')
+    
+    # Check if any admin is configured
+    if not has_admin_configured():
+        st.error("❌ No admin users configured.")
+        st.info("💡 Please add admin configuration to your secrets.toml:")
+        st.code("""
+[admin]
+admin_emails = ["your.email@example.com"]
+super_admin = "your.email@example.com"
+allow_analytics = true
+allow_user_management = true
+allow_system_controls = false
+""")
+        return
     
     if not is_admin_user(user_email):
         st.error("❌ Access denied. Admin privileges required.")

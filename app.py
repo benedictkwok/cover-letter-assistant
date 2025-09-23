@@ -1165,63 +1165,70 @@ def clean_ai_response(response):
 
 
 def extract_company_name(job_description):
-    """Extract company name from job description using common patterns."""
+    """Extract company name from job description using LLM."""
     import re
+    from langchain_openai import ChatOpenAI
     
     if not job_description:
         return "company"
     
-    # Convert to lowercase for pattern matching
-    text = job_description.lower()
-    
-    # Common patterns for company names in job descriptions
-    patterns = [
-        r'(?:at|join|for)\s+([A-Z][a-zA-Z\s&,.-]+?)(?:\s+(?:is|are|has|have|we|our|the|in|on|as|to|for|with|and|or|but|,|\.|!|\?))',
-        r'([A-Z][a-zA-Z\s&,.-]+?)\s+(?:is|are)\s+(?:looking|seeking|hiring|recruiting)',
-        r'company:\s*([A-Z][a-zA-Z\s&,.-]+?)(?:\s|$|\n)',
-        r'organization:\s*([A-Z][a-zA-Z\s&,.-]+?)(?:\s|$|\n)',
-        r'employer:\s*([A-Z][a-zA-Z\s&,.-]+?)(?:\s|$|\n)',
-        r'about\s+([A-Z][a-zA-Z\s&,.-]+?)(?:\s|$|\n)',
-        r'([A-Z][a-zA-Z\s&,.-]+?)\s+(?:team|group|department|division)',
-    ]
-    
-    # Try each pattern on the original case text
-    for pattern in patterns:
-        matches = re.findall(pattern, job_description, re.IGNORECASE)
-        if matches:
-            company_name = matches[0].strip()
-            # Clean up the company name
-            company_name = re.sub(r'[^\w\s&,.-]', '', company_name)
+    try:
+        # Use the same LLM as the main application
+        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+        
+        # Create a focused prompt for company extraction
+        extraction_prompt = f"""
+Extract the company name from this job description. Return ONLY the company name, nothing else.
+If multiple companies are mentioned, return the hiring company.
+If no clear company name is found, return "unknown".
+
+Job Description:
+{job_description[:1000]}  # Limit to first 1000 chars to save tokens
+
+Company Name:"""
+        
+        # Get the response
+        response = llm.invoke(extraction_prompt)
+        company_name = response.content.strip()
+        
+        # Clean and validate the response
+        if company_name and company_name.lower() not in ['unknown', 'company', 'n/a', 'not specified']:
+            # Clean up the company name for consistency
+            company_name = re.sub(r'[^\w\s&.-]', '', company_name)
             company_name = company_name.strip()
-            if len(company_name) > 2 and len(company_name) < 50:
-                # Replace spaces and special characters for filename
+            
+            if len(company_name) > 1 and len(company_name) < 50:
+                # Normalize for analytics (lowercase, replace spaces with hyphens)
                 clean_name = re.sub(r'[^\w]', '-', company_name)
                 clean_name = re.sub(r'-+', '-', clean_name).strip('-')
                 return clean_name.lower()
-    
-    # Fallback: look for capitalized words at the beginning
-    lines = job_description.split('\n')
-    for line in lines[:5]:  # Check first 5 lines
-        words = line.split()
-        for i, word in enumerate(words):
-            if word[0].isupper() and len(word) > 2 and i < 10:
-                # Check if next 1-2 words are also capitalized (could be company name)
-                company_parts = [word]
-                for j in range(i+1, min(i+3, len(words))):
-                    next_word = words[j]
-                    if next_word[0].isupper() and len(next_word) > 1:
-                        company_parts.append(next_word)
-                    else:
-                        break
-                
-                if len(company_parts) >= 1:
-                    company_name = ' '.join(company_parts)
-                    if len(company_name) < 50:
-                        clean_name = re.sub(r'[^\w]', '-', company_name)
-                        clean_name = re.sub(r'-+', '-', clean_name).strip('-')
-                        return clean_name.lower()
-    
-    return "company"
+        
+        # Fallback: try a simple regex approach for well-known companies
+        well_known_companies = [
+            'NVIDIA', 'Google', 'Microsoft', 'Apple', 'Amazon', 'Meta', 'Tesla', 
+            'Netflix', 'Uber', 'Airbnb', 'Spotify', 'Adobe', 'Salesforce',
+            'OpenAI', 'Anthropic', 'IBM', 'Oracle', 'Intel', 'AMD', 'Qualcomm'
+        ]
+        
+        for company in well_known_companies:
+            if re.search(rf'\b{company}\b', job_description, re.IGNORECASE):
+                return company.lower()
+        
+        return "company"
+        
+    except Exception as e:
+        print(f"Error in LLM company extraction: {e}")
+        # Fallback to simple regex if LLM fails
+        well_known_companies = [
+            'NVIDIA', 'Google', 'Microsoft', 'Apple', 'Amazon', 'Meta', 'Tesla', 
+            'Netflix', 'Uber', 'Airbnb', 'Spotify', 'Adobe', 'Salesforce'
+        ]
+        
+        for company in well_known_companies:
+            if re.search(rf'\b{company}\b', job_description, re.IGNORECASE):
+                return company.lower()
+        
+        return "company"
 
 
 def generate_pdf(content, user_id):

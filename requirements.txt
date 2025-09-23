@@ -1,0 +1,17 @@
+streamlit>=1.28.0
+langchain-community>=0.0.25
+langchain>=0.1.0
+# Ollama integration (local deployment)
+# langchain-ollama>=0.1.0
+# OpenAI integration (cloud deployment)
+langchain-openai>=0.1.0
+openai>=1.0.0
+# chromadb>=0.4.0  # Requires newer SQLite, not available on Streamlit Cloud
+faiss-cpu>=1.7.0
+pypdf>=3.0.0
+reportlab>=4.0.0
+# llm-guard>=0.3.0  # Optional - heavy ML models, may not work on all cloud platforms
+requests>=2.31.0
+python-dotenv>=1.0.0
+# pickle5>=0.0.11  # Not needed for Python 3.8+
+pandas>=1.5.0

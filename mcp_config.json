@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cover-letter-analytics": {
+      "command": "python",
+      "args": ["mcp_server.py"],
+      "cwd": "/Users/bkwok/dev/ai_project/project-3-11/job-assistant/cover-letter-assistant"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+    "python.defaultInterpreterPath": "python",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "files.associations": {
+        "*.py": "python"
+    },
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "task.allowAutomaticTasks": "on"
+}

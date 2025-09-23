@@ -1,0 +1,79 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start MCP Server",
+            "type": "shell",
+            "command": "python",
+            "args": ["mcp_server.py"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "isBackground": true,
+            "problemMatcher": [],
+            "runOptions": {
+                "instanceLimit": 1
+            }
+        },
+        {
+            "label": "Test MCP Server",
+            "type": "shell",
+            "command": "python",
+            "args": ["test_mcp.py"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Get Usage Statistics",
+            "type": "shell",
+            "command": "python",
+            "args": ["-c", "from mcp_server import UsageAnalyticsServer; import json; server = UsageAnalyticsServer(); stats = server.get_aggregated_stats(); print(json.dumps(stats, indent=2))"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Get Recent Activity",
+            "type": "shell",
+            "command": "python",
+            "args": ["-c", "from mcp_server import UsageAnalyticsServer; import json; server = UsageAnalyticsServer(); activity = server.get_recent_activity_summary(); print(json.dumps(activity, indent=2))"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Run Streamlit App",
+            "type": "shell",
+            "command": "streamlit",
+            "args": ["run", "app.py"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        }
+    ]
+}

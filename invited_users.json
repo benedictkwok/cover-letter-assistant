@@ -1,0 +1,27 @@
+{
+  "invited_users": {
+    "example@gmail.com": {
+      "name": "John Doe",
+      "invited_date": "2025-01-15",
+      "status": "active",
+      "access_level": "user",
+      "notes": "Example user - replace with actual invitees"
+    },
+    "admin@yourcompany.com": {
+      "name": "Admin User",
+      "invited_date": "2025-01-15",
+      "status": "active",
+      "access_level": "admin",
+      "notes": "Administrator with special privileges"
+    }
+  },
+  "admin_emails": [
+    "admin@yourcompany.com"
+  ],
+  "app_settings": {
+    "max_users": 50,
+    "invitation_required": true,
+    "allow_self_registration": false,
+    "daily_cover_letter_limit": 5
+  }
+}

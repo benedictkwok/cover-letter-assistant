@@ -1584,9 +1584,9 @@ def main():
                         chain = create_chain(retriever, llm, user_strengths, user_email)
 
                         # Extract company name and job title for tracking
-                        company_name = extract_company_name(job_description) if job_description else None
+                        company_name = extract_company_name(user_input) if user_input else None
                         job_title_pattern = r'(?:job title|position|role):\s*([^\n\r]+)|([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Engineer|Developer|Manager|Analyst|Specialist|Director|Coordinator)))'
-                        job_title_match = re.search(job_title_pattern, job_description, re.IGNORECASE) if job_description else None
+                        job_title_match = re.search(job_title_pattern, user_input, re.IGNORECASE) if user_input else None
                         job_title = job_title_match.group(1) or job_title_match.group(2) if job_title_match else None
                         
                         # Measure processing time

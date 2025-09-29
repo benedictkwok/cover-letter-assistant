@@ -18,11 +18,24 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-# Ollama imports (local deployment)
-# from langchain_ollama import OllamaEmbeddings, ChatOllama
-# import ollama
-# OpenAI imports (cloud deployment)
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+# LLM Backend imports - Support both Ollama and OpenAI
+try:
+    # Ollama imports (local deployment)
+    from langchain_ollama import OllamaEmbeddings, ChatOllama
+    import ollama
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    print("⚠️ Ollama not available - install with: pip install langchain-ollama")
+    OLLAMA_AVAILABLE = False
+
+try:
+    # OpenAI imports (cloud deployment)
+    from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    print("⚠️ OpenAI not available - install with: pip install langchain-openai")
+    OPENAI_AVAILABLE = False
 from langchain.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -45,7 +58,21 @@ from security_utils import (
     check_daily_cover_letter_limit, record_cover_letter_generation, get_daily_usage_stats,
     get_admin_users, reset_user_daily_limit
 )
+from streamlit_auth0 import login_button
 
+AUTH0_DOMAIN = st.secrets["auth0"]["domain"]
+AUTH0_CLIENT_ID = st.secrets["auth0"]["client_id"]
+
+user_info = login_button(
+    domain=AUTH0_DOMAIN,
+    client_id=AUTH0_CLIENT_ID,
+#    redirect_uri="http://localhost:8501"
+)
+
+if user_info:
+    st.write(f"Welcome, {user_info['name']}!")
+else:
+    st.write("Please log in.")
 # Initialize LLM Guard if available
 if LLM_GUARD_AVAILABLE:
     try:
@@ -124,17 +151,65 @@ except Exception as e:
     logging.warning(f"OpenAI API key configuration warning: {e}")
 
 # Constants
-# Ollama models (local deployment)
-# MODEL_NAME = "qwen3:8b"
-# EMBEDDING_MODEL = "nomic-embed-text"
+# LLM Backend Configuration
+# Configure which backend to use: 'openai' or 'ollama'
+# Set this in your secrets.toml file as: LLM_BACKEND = "openai" or "ollama"
+LLM_BACKEND = st.secrets.get("LLM_BACKEND", "openai").lower()
 
-# OpenAI models (cloud deployment)
-MODEL_NAME = "gpt-4o-mini"  # Cost-effective OpenAI model
-EMBEDDING_MODEL = "text-embedding-3-small"  # OpenAI embedding model
+# Model configurations for each backend
+MODEL_CONFIGS = {
+    "openai": {
+        "model": "gpt-4o-mini",  # Cost-effective OpenAI model
+        "embedding": "text-embedding-3-small"  # OpenAI embedding model
+    },
+    "ollama": {
+        "model": "qwen3:8b",  # Local Ollama model
+        "embedding": "nomic-embed-text"  # Ollama embedding model
+    }
+}
+
+# Validate backend availability and set active models
+if LLM_BACKEND == "openai" and OPENAI_AVAILABLE:
+    MODEL_NAME = MODEL_CONFIGS["openai"]["model"]
+    EMBEDDING_MODEL = MODEL_CONFIGS["openai"]["embedding"]
+    st.write("🌐 Using OpenAI backend")
+elif LLM_BACKEND == "ollama" and OLLAMA_AVAILABLE:
+    MODEL_NAME = MODEL_CONFIGS["ollama"]["model"] 
+    EMBEDDING_MODEL = MODEL_CONFIGS["ollama"]["embedding"]
+    st.write("🏠 Using Ollama backend")
+elif LLM_BACKEND == "openai" and not OPENAI_AVAILABLE:
+    st.error("❌ OpenAI backend requested but not available. Install with: pip install langchain-openai")
+    st.stop()
+elif LLM_BACKEND == "ollama" and not OLLAMA_AVAILABLE:
+    st.error("❌ Ollama backend requested but not available. Install with: pip install langchain-ollama")
+    st.stop()
+else:
+    st.error(f"❌ Unknown LLM backend: {LLM_BACKEND}. Please set LLM_BACKEND to 'openai' or 'ollama' in secrets.toml")
+    st.stop()
 
 BASE_PERSIST_DIRECTORY = "./faiss_db_multiuser"
 USER_PREFERENCES_DIR = "./user_preferences"
 INVITED_USERS_FILE = "./invited_users.json"
+
+
+def get_embedding_instance():
+    """Get the appropriate embedding instance based on configured backend."""
+    if LLM_BACKEND == "openai":
+        return OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    elif LLM_BACKEND == "ollama":
+        return OllamaEmbeddings(model=EMBEDDING_MODEL)
+    else:
+        raise ValueError(f"Unsupported LLM backend: {LLM_BACKEND}")
+
+
+def get_chat_model_instance(temperature=0):
+    """Get the appropriate chat model instance based on configured backend."""
+    if LLM_BACKEND == "openai":
+        return ChatOpenAI(model=MODEL_NAME, temperature=temperature)
+    elif LLM_BACKEND == "ollama":
+        return ChatOllama(model=MODEL_NAME, temperature=temperature)
+    else:
+        raise ValueError(f"Unsupported LLM backend: {LLM_BACKEND}")
 
 
 def load_invited_users():
@@ -725,8 +800,8 @@ def load_user_vector_db(user_id, uploaded_file_path=None):
         user_persist_dir, _ = get_user_directories(user_id)
         user_collection_name = f"resume_{user_id}"
         
-        # OpenAI embedding setup (cloud deployment)
-        embedding = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+        # Embedding setup with dynamic backend
+        embedding = get_embedding_instance()
 
         # Check if user already has a vector database
         faiss_index_path = os.path.join(user_persist_dir, "index.faiss")
@@ -1223,14 +1298,13 @@ def clean_ai_response(response):
 def extract_company_name(job_description):
     """Extract company name from job description using LLM."""
     import re
-    from langchain_openai import ChatOpenAI
     
     if not job_description:
         return "company"
     
     try:
-        # Use the same LLM as the main application
-        llm = ChatOpenAI(model=MODEL_NAME, temperature=0)
+        # Use the configured LLM backend
+        llm = get_chat_model_instance()
         
         # Create a focused prompt for company extraction
         extraction_prompt = f"""
@@ -1623,12 +1697,8 @@ def main():
             if st.button("🚀 Generate Cover Letter", type="primary"):
                 with st.spinner("Generating your personalized cover letter..."):
                     try:
-                        # Initialize the language model
-                        # Ollama (local deployment)
-                        # llm = ChatOllama(model=MODEL_NAME)
-                        
-                        # OpenAI (cloud deployment)
-                        llm = ChatOpenAI(model=MODEL_NAME, temperature=0.7)
+                        # Initialize the language model with configured backend
+                        llm = get_chat_model_instance(temperature=0.7)
 
                         # Load the user's vector database
                         vector_db = load_user_vector_db(st.session_state.user_id)

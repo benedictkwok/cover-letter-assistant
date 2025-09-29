@@ -58,21 +58,7 @@ from security_utils import (
     check_daily_cover_letter_limit, record_cover_letter_generation, get_daily_usage_stats,
     get_admin_users, reset_user_daily_limit
 )
-from streamlit_auth0 import login_button
-
-AUTH0_DOMAIN = st.secrets["auth0"]["domain"]
-AUTH0_CLIENT_ID = st.secrets["auth0"]["client_id"]
-
-user_info = login_button(
-    domain=AUTH0_DOMAIN,
-    client_id=AUTH0_CLIENT_ID,
-#    redirect_uri="http://localhost:8501"
-)
-
-if user_info:
-    st.write(f"Welcome, {user_info['name']}!")
-else:
-    st.write("Please log in.")
+## Removed duplicate login_button and Auth0 config; now handled in show_authentication_page()
 # Initialize LLM Guard if available
 if LLM_GUARD_AVAILABLE:
     try:
@@ -318,73 +304,47 @@ def verify_session_token(email, token):
 
 def show_authentication_page():
     """Display the authentication page for invitation-only access."""
-    st.title("🔐 Resume Assistant - Invitation Only")
+    st.title("🔐 Resume Assistant")
     st.markdown("---")
-    
-    st.info("🎯 This application is invitation-only. Please enter your invited email address to access the resume assistant.")
-    
-    with st.form("authentication_form"):
-        email = st.text_input("📧 Email Address", placeholder="your.email@example.com")
-        submit_button = st.form_submit_button("🚀 Access Application")
-        
-        if submit_button:
-            if not email:
-                st.error("❌ Please enter your email address.")
-                log_authentication_attempt("", False)
-                return False
+    st.info("🎯 This application uses Auth0 for authentication. Please log in to access the resume assistant.")
+
+    # Use Auth0 user_info from login_button
+    from streamlit_auth0 import login_button
+    AUTH0_DOMAIN = st.secrets["auth0"]["domain"]
+    AUTH0_CLIENT_ID = st.secrets["auth0"]["client_id"]
+    user_info = login_button(
+        domain=AUTH0_DOMAIN,
+        client_id=AUTH0_CLIENT_ID,
+        # redirect_uri="http://localhost:8501" # Uncomment and set if needed
+        key="auth0-login"
+    )
+
+    if user_info:
+        st.success(f"✅ Welcome, {user_info.get('name', user_info.get('email', 'User'))}! Access granted.")
+        st.session_state.authenticated = True
+        st.session_state.user_email = user_info.get('email', '').lower()
+        st.session_state.user_info = user_info
+        st.session_state.auth_timestamp = datetime.now()
+        return True
+    else:
+        st.warning("Please log in using Auth0 to access the application.")
+        st.markdown("---")
+        with st.expander("ℹ️ Need Access?"):
+            st.markdown("""
+            **This is an invitation-only application.** 
             
-            if not validate_email_format(email):
-                st.error("❌ Please enter a valid email address.")
-                log_authentication_attempt(email, False)
-                return False
+            If you need access to the Resume Assistant:
+            1. Contact the application administrator
+            2. Provide your email address to be added to the invited users list
+            3. Wait for confirmation before attempting to access the application
             
-            # Check rate limiting
-            if not check_rate_limit(email, "authentication", max_requests=5, time_window_minutes=15):
-                st.error("❌ Too many authentication attempts. Please try again later.")
-                return False
-            
-            if not is_user_invited(email):
-                st.error("❌ Sorry, your email is not on the invited users list. Please contact the administrator for access.")
-                st.info("💡 If you believe this is an error, please double-check your email address spelling.")
-                log_authentication_attempt(email, False)
-                return False
-            
-            # Successful authentication
-            user_info = get_user_info(email)
-            st.success(f"✅ Welcome, {user_info.get('name', email)}! Access granted.")
-            
-            # Create session
-            st.session_state.authenticated = True
-            st.session_state.user_email = email.lower()
-            st.session_state.user_info = user_info
-            st.session_state.session_token = create_session_token(email.lower())
-            st.session_state.auth_timestamp = datetime.now()
-            
-            # Log successful access
-            log_authentication_attempt(email, True)
-            logging.info(f"User authenticated successfully: {email}")
-            
-            st.rerun()
-    
-    # Show contact information
-    st.markdown("---")
-    with st.expander("ℹ️ Need Access?"):
-        st.markdown("""
-        **This is an invitation-only application.** 
-        
-        If you need access to the Resume Assistant:
-        1. Contact the application administrator
-        2. Provide your email address to be added to the invited users list
-        3. Wait for confirmation before attempting to access the application
-        
-        **Features available to invited users:**
-        - AI-powered cover letter generation
-        - Resume analysis and optimization
-        - Personalized writing style learning
-        - Secure data storage and privacy
-        """)
-    
-    return False
+            **Features available to invited users:**
+            - AI-powered cover letter generation
+            - Resume analysis and optimization
+            - Personalized writing style learning
+            - Secure data storage and privacy
+            """)
+        return False
 
 
 def check_authentication():
@@ -432,18 +392,15 @@ def initialize_user_session():
         user_email = st.session_state.user_email
         # Create a safe user ID from email for directory names
         safe_user_id = user_email.replace('@', '_at_').replace('.', '_').replace('+', '_plus_')
-        
-        if 'user_id' not in st.session_state:
-            st.session_state.user_id = safe_user_id
-            st.session_state.session_start = datetime.now()
-            st.session_state.extracted_email = user_email
-            st.session_state.permanent_user_id = user_email
-            logging.info(f"Authenticated user session created: {user_email} -> {safe_user_id}")
+        st.session_state.user_id = safe_user_id
+        st.session_state.session_start = datetime.now()
+        st.session_state.extracted_email = user_email
+        st.session_state.permanent_user_id = user_email
+        logging.info(f"Authenticated user session created: {user_email} -> {safe_user_id}")
     else:
         # Fallback for unauthenticated access (shouldn't happen in production)
-        if 'user_id' not in st.session_state:
-            st.session_state.user_id = str(uuid.uuid4())[:8]
-            st.session_state.session_start = datetime.now()
+        st.session_state.user_id = str(uuid.uuid4())[:8]
+        st.session_state.session_start = datetime.now()
     
     # Initialize session state variables
     if 'vector_db_ready' not in st.session_state:
@@ -1440,10 +1397,10 @@ def main():
     # Initialize usage tracking database
     init_usage_db()
     
-    # Check authentication first
-    if not check_authentication():
-        if not show_authentication_page():
-            return
+    # Use Auth0 authentication only
+    auth_result = show_authentication_page()
+    if auth_result is False:
+        return
     
     # Add logout option to sidebar
     with st.sidebar:

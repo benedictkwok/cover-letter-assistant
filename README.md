@@ -161,7 +161,7 @@ Deploy `admin_dashboard.py` separately for a web-based management interface.
 - **Email**: Primary identifier for user authentication
 - **Directory**: Safe email format used for folder names
 - **Preferences**: Stored in JSON files with user patterns
-- **Vector DB**: Individual FAISS instance per user
+- **Vector Store**: Individual FAISS instance per user
 
 ## 🔧 Configuration
 

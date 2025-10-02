@@ -4,7 +4,7 @@ An intelligent, secure, and personalized cover letter generation system built wi
 
 ## ✨ Key Features
 
-- **🔐 Auth0 OAuth2 Authentication**: Secure social login with Google, GitHub, and other providers
+- **🔐 Auth0 OAuth2 Authentication**: Secure social login with PKCE and CSRF protection via state parameter
 - **🌐 Multi-Language Support**: Generate cover letters in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
 - **📊 Admin Dashboard**: Web-based analytics dashboard with real-time usage monitoring
 - **👤 User Data Isolation**: Each user's data is completely separated and secure
@@ -170,10 +170,11 @@ The application now uses Auth0 for secure authentication with social login suppo
 6. **Personalized Preferences**: Loads user-specific settings and learning data
 
 **Security Features:**
-- **PKCE (Proof Key for Code Exchange)**: Prevents authorization code interception attacks
-- **State Parameter**: CSRF protection during OAuth flow
-- **No Client Secret Required**: Secure for client-side applications
-- **Traditional/Simplified Chinese Support**: Proper formatting for different regions
+- **PKCE (Proof Key for Code Exchange)**: Prevents authorization code interception attacks by using dynamic code verifiers
+- **State Parameter**: Provides CSRF (Cross-Site Request Forgery) protection during OAuth flow
+- **No Client Secret Required**: Secure for client-side applications without exposing sensitive credentials
+- **Automatic Token Validation**: Auth0 handles secure token exchange and validation
+- **Session Management**: Secure session state with automatic cleanup
 
 **Configuration:**
 ```toml

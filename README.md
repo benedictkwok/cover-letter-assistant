@@ -4,6 +4,7 @@ An intelligent, secure, and personalized cover letter generation system built wi
 
 ## ✨ Key Features
 
+- **🔐 Auth0 OAuth2 Authentication**: Secure social login with Google, GitHub, and other providers
 - **🌐 Multi-Language Support**: Generate cover letters in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
 - **📊 Admin Dashboard**: Web-based analytics dashboard with real-time usage monitoring
 - **👤 User Data Isolation**: Each user's data is completely separated and secure
@@ -55,23 +56,31 @@ The AI Cover Letter Assistant now supports generating cover letters in multiple 
    cd cover-letter-assistant
    ```
 
-2. **Get OpenAI API Key**:
+2. **Set up Auth0 Authentication**:
+   - Create a free Auth0 account at [auth0.com](https://auth0.com)
+   - Create a new Single Page Application
+   - Configure social providers (Google, GitHub, etc.)
+   - Get your domain and client ID
+
+3. **Get OpenAI API Key**:
    - Sign up at [platform.openai.com](https://platform.openai.com)
    - Create an API key
    - Estimated cost: ~$0.02-0.10 per cover letter
 
-3. **Configure secrets**:
+4. **Configure secrets**:
    ```toml
    # .streamlit/secrets.toml
+   [auth0]
+   domain = "your-auth0-domain.auth0.com"
+   client_id = "your-auth0-client-id"
+   
    [openai]
    api_key = "your-openai-api-key"
-   
-   [invited_users]
-   "your.email@example.com" = "Your Name"
    ```
 
 4. **Deploy to Streamlit Cloud**:
    - See [DEPLOYMENT_OPENAI.md](DEPLOYMENT_OPENAI.md) for detailed instructions
+   - Add Auth0 configuration to Streamlit Cloud secrets
 
 ### Option 2: Local Development with Ollama
 
@@ -148,11 +157,31 @@ cover-letter-assistant/
 - **Usage Analytics**: Track daily usage across all users
 
 ### Authentication Flow
-1. User enters email address
-2. System validates against invitation list
-3. Creates secure session token
-4. Maps user to unique data directory
-5. Loads personalized preferences
+
+**🔐 Auth0 OAuth2 Integration**
+
+The application now uses Auth0 for secure authentication with social login support:
+
+1. **OAuth2 Authorization Code Flow with PKCE**: Secure authentication without exposing client secrets
+2. **Social Login Support**: Users can sign in with Google, GitHub, and other providers
+3. **Automatic User Info Extraction**: Email and profile information retrieved from Auth0
+4. **Session Management**: Creates secure session tokens upon successful authentication
+5. **User Directory Mapping**: Maps authenticated user to unique data directory
+6. **Personalized Preferences**: Loads user-specific settings and learning data
+
+**Security Features:**
+- **PKCE (Proof Key for Code Exchange)**: Prevents authorization code interception attacks
+- **State Parameter**: CSRF protection during OAuth flow
+- **No Client Secret Required**: Secure for client-side applications
+- **Traditional/Simplified Chinese Support**: Proper formatting for different regions
+
+**Configuration:**
+```toml
+# .streamlit/secrets.toml
+[auth0]
+domain = "your-auth0-domain.auth0.com"
+client_id = "your-auth0-client-id"
+```
 
 ## 👥 User Management
 

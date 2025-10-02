@@ -187,7 +187,7 @@ Deploy `admin_dashboard.py` separately for a web-based management interface.
 - **Email**: Primary identifier for user authentication
 - **Directory**: Safe email format used for folder names
 - **Preferences**: Stored in JSON files with user patterns
-- **Vector DB**: Individual ChromaDB instance per user
+- **Vector Store**: Individual FAISS instance per user
 
 ## 🔧 Configuration
 
@@ -266,7 +266,7 @@ allow_system_controls = false
 
 ### Security Features
 
-- **Access Control**: Only authorized emails can access dashboard
+- **Access Control**: Only authorized emails can access dashboard, using Auth0 for social sign-in
 - **Audit Logging**: All admin actions are logged
 - **Data Privacy**: No personal data or resume content exposed
 - **Aggregated Views**: All statistics are anonymized and aggregated

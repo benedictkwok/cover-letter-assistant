@@ -4,6 +4,7 @@ An intelligent, secure, and personalized cover letter generation system built wi
 
 ## ✨ Key Features
 
+- **🌐 Multi-Language Support**: Generate cover letters in English, Traditional Chinese (繁體中文), and Simplified Chinese (简体中文)
 - **📊 Admin Dashboard**: Web-based analytics dashboard with real-time usage monitoring
 - **👤 User Data Isolation**: Each user's data is completely separated and secure
 - **🧠 Personalized AI**: Learns from user preferences and writing patterns
@@ -16,6 +17,31 @@ An intelligent, secure, and personalized cover letter generation system built wi
 - **🔌 MCP Server**: Model Context Protocol server for privacy-focused analytics integration
 - **🎯 Smart Company Detection**: LLM-powered company name extraction for accurate analytics
 - **📈 VS Code Integration**: Direct analytics access through VS Code with MCP client interface
+
+## 🌐 Multi-Language Support
+
+The AI Cover Letter Assistant now supports generating cover letters in multiple languages to serve job seekers across different regions:
+
+### Supported Languages
+
+- **🇺🇸 English**: Standard business language for international applications
+- **🇭🇰 Traditional Chinese (繁體中文)**: Ideal for Hong Kong and Taiwan job applications
+- **🇨🇳 Simplified Chinese (简体中文)**: Perfect for Mainland China job applications
+
+### Language-Specific Features
+
+- **Proper Business Formatting**: Each language uses appropriate business correspondence conventions
+- **Regional Salutations**: Correct greeting formats for each market
+- **Professional Closings**: Culturally appropriate sign-offs
+- **Tone Adaptation**: Formal business tone adjusted for each language
+
+### Usage Workflow
+
+1. **Upload Resume**: Upload your PDF resume (any language)
+2. **Select Language**: Choose your target language from the dropdown
+3. **Enter Job Description**: Paste the job posting (any language)
+4. **Generate**: AI creates a professionally formatted cover letter in your selected language
+5. **Review & Edit**: Make any necessary adjustments while preserving cultural appropriateness
 
 ## 🚀 Quick Start
 

@@ -1181,7 +1181,7 @@ def create_retriever(vector_db, llm):
     return retriever
 
 
-def create_chain(retriever, llm, user_strengths=None, user_email=None):
+def create_chain(retriever, llm, user_strengths=None, user_email=None, language="English"):
     """Create the chain with preserved syntax and personalized context."""
     # Build the strength instruction based on user input
     if user_strengths and user_strengths.strip():
@@ -1204,18 +1204,31 @@ def create_chain(retriever, llm, user_strengths=None, user_email=None):
         else:
             logging.info("DEBUG: No personalized additions generated")
     
-    # RAG prompt
+    # RAG prompt with language support
+    if language == "Traditional Chinese (繁體中文)":
+        language_instruction = "\nIMPORTANT: Write the entire cover letter in Traditional Chinese (繁體中文). Use professional and formal tone appropriate for Hong Kong business correspondence."
+        salutation_format = "親愛的[公司名稱]招聘經理："
+        closing_format = "此致敬禮，[候選人姓名]"
+    elif language == "Simplified Chinese (简体中文)":
+        language_instruction = "\nIMPORTANT: Write the entire cover letter in Simplified Chinese (简体中文). Use professional and formal tone appropriate for Mainland China business correspondence."
+        salutation_format = "亲爱的[公司名称]招聘经理："
+        closing_format = "此致敬礼，[候选人姓名]"
+    else:
+        language_instruction = ""
+        salutation_format = "Dear [Company] Hiring Manager,"
+        closing_format = "Sincerely, [candidate's name]"
+    
     template = f"""You are a Human Resource resume reviewer, your role is to assist the job applicant to create a concise cover letter based on his resume 
 by answering the question based ONLY on the following context. The cover letter should ideally be less than 280 words
 {strength_instruction}
-{main_instruction} and provided with a career plan{personalized_context}
+{main_instruction} and provided with a career plan{personalized_context}{language_instruction}
 
 IMPORTANT FORMATTING INSTRUCTIONS:
-- Start the cover letter directly with "Dear [Company] Hiring Manager," (replace [Company] with the actual company name from the job description)
+- Start the cover letter directly with "{salutation_format}" (replace [Company] or [公司名稱] with the actual company name from the job description)
 - Do NOT include any header information like [Your Name], [Your Address], [City, State, Zip], [Email Address], [Phone Number], [Date], etc.
 - Do NOT include company address information
 - Begin immediately with the salutation and proceed with the cover letter content
-- End with "Sincerely," followed by the candidate's actual name extracted from the resume (NOT "[Your Name]" placeholder)
+- End with "{closing_format}" using the candidate's actual name extracted from the resume (NOT placeholder text)
 - Extract the candidate's full name from the resume context and use it in the closing signature
 
 {{context}}
@@ -1527,10 +1540,13 @@ def main():
         st.write("---")
         st.write("**How to use:**")
         st.write("1. Upload your resume (PDF)")
-        st.write("2. Enter job description")
-        st.write("3. Add specific strengths (optional)")
-        st.write("4. Generate cover letter")
-        st.write("5. Edit and save for learning")
+        st.write("2. Select your preferred language")
+        st.write("3. Enter job description")
+        st.write("4. Add specific strengths (optional)")
+        st.write("5. Generate cover letter")
+        st.write("6. Edit and save for learning")
+        
+        st.info("💡 **Language Options:**\n- **English**: Standard business language\n- **Traditional Chinese**: Recommended for Hong Kong and Taiwan job applications\n- **Simplified Chinese**: Recommended for Mainland China job applications")
     
     # Step 1: File Upload
     st.header("Step 1: Upload Your Resume")
@@ -1588,6 +1604,13 @@ def main():
                     for highlight in prefs["preferred_highlights"][-5:]:  # Show last 5
                         st.write(f"• {highlight}")
         
+        # Language selection
+        language = st.selectbox(
+            "🌐 Select language for cover letter:",
+            options=["English", "Traditional Chinese (繁體中文)", "Simplified Chinese (简体中文)"],
+            help="Choose the language for your cover letter. Traditional Chinese is commonly used for Hong Kong job applications, while Simplified Chinese is used in Mainland China."
+        )
+        
         # Job description input
         user_input = st.text_area(
             "Copy and paste the job description:", 
@@ -1614,6 +1637,9 @@ def main():
             st.session_state.current_job_description = user_input
         if user_strengths:
             st.session_state.current_user_strengths = user_strengths
+        
+        # Store selected language
+        st.session_state.selected_language = language
         
         if user_input:
             # Input validation
@@ -1672,7 +1698,7 @@ def main():
                         user_email = getattr(st.session_state, 'extracted_email', None)
                         
                         # Create the chain with personalization
-                        chain = create_chain(retriever, llm, user_strengths, user_email)
+                        chain = create_chain(retriever, llm, user_strengths, user_email, language)
 
                         # Extract company name and job title for tracking
                         company_name = extract_company_name(user_input) if user_input else None
